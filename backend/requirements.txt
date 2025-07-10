@@ -1,0 +1,9 @@
+fastapi
+google-generativeai
+uvicorn
+pydantic
+python-dotenv
+shopping@git+https://github.com/bilbobx182/shopping.git
+
+# You can install all dependencies with:
+# pip install -r requirements.txt

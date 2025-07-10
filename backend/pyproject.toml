@@ -1,0 +1,9 @@
+[project]
+name = "meal_planner_backend"
+version = "0.1.0"
+description = "Backend for the AI Meal Planner."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+]

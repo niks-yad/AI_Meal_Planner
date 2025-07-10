@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Environment variables
+.env
+
+# Database files
+*.db
+*.sqlite3
+
+# Node modules
+node_modules/
+
+# Build output
+build/
+dist/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Apt files
+*.apt
+*.apt-get
+*.apt-cache
+*.apt-list
+*.apt-key
+*.apt.conf
+*.apt.conf.d/
+
+# Log files
+*.log
+
+# Misc
+*.bak
+*.swp
+*.tmp
+
+# Gemeni
+GEMENI.md
