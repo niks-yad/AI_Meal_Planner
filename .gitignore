@@ -48,5 +48,6 @@ Thumbs.db
 *.swp
 *.tmp
 
-# Gemeni
-GEMENI.md
+# Project documentation (ignore these in git)
+tech_stack.md
+GEMINI.md
