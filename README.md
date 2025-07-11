@@ -35,29 +35,18 @@ An intelligent meal planning platform that generates customized weekly meal plan
 
 ## 🔄 Current Development Phase
 
-Our team is actively working on:
+I am actively working on:
 
 - **Performance Optimization** - Enhancing response times and API efficiency
-- **Advanced AI Features** - Implementing more sophisticated meal customization
-- **User Experience Improvements** - Refining the interface for better usability
-- **Nutritional Analytics** - Adding detailed nutritional insights and tracking
-- **Mobile Responsiveness** - Ensuring seamless experience across all devices
+- **Advanced AI Features** - Implementing more sophisticated meal customization from local DBs
+- **User Experience Improvements** - Refining the interface for better usability, auth, and account creation
+- **Nutritional Analytics** - Adding detailed nutritional insights and tracking, creating the component "Fridge"
+- **Mobile Adoption** - Ensuring seamless experience across both iOS and Android devices
 
-## 🎉 Coming Features
+## 📊 Partnerships
 
-- **Meal History & Analytics** - Track your nutritional progress over time
-- **Community Recipes** - Share and discover recipes from other users
-- **Integration APIs** - Connect with popular fitness and health apps
-- **Advanced Dietary Support** - Expanded options for specialized diets
-- **Meal Prep Scheduling** - Smart scheduling for meal preparation timing
-
-## 📊 Impact & Vision
-
-**Current Impact:**
-- Reduces weekly meal planning time by 80%
-- Eliminates guesswork in nutritional balance
-- Streamlines grocery shopping with automated lists
-- Supports diverse dietary requirements and health goals
+**Walmart:**
+- Currently in talks with Walmart to integrate their I/O service to fetch Real-Time data about products and services
 
 **Vision:**
 To revolutionize how people approach meal planning by making healthy, personalized nutrition accessible through intelligent automation.
@@ -84,9 +73,6 @@ While the platform is in active development, we welcome:
 - Documentation improvements
 - Testing and feedback
 
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
