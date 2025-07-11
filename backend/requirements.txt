@@ -1,9 +1,24 @@
-fastapi
-google-generativeai
-uvicorn
-pydantic
-python-dotenv
-shopping@git+https://github.com/bilbobx182/shopping.git
+# Core FastAPI
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-dotenv==1.0.0
 
-# You can install all dependencies with:
-# pip install -r requirements.txt
+# Database
+asyncpg==0.29.0
+sqlalchemy[asyncio]==2.0.23
+alembic==1.12.1
+
+# AI & MCP
+google-generativeai==0.3.2
+fastmcp==2.0.1
+mcp==1.0.0
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Utilities
+httpx==0.25.2
+python-dateutil==2.8.2
