@@ -1,0 +1,44 @@
+Backend Code Understanding:
+
+1.  **Entry Point (`backend/main.py`):**
+    *   This is a FastAPI application.
+    *   It initializes the FastAPI app, configures CORS, and sets up logging.
+    *   It defines Pydantic models for data validation:
+        *   `HealthData`: For user health input (height, weight, activity level).
+        *   `DayMeal`: Structure for a single day's meal plan.
+        *   `MealPlanResponse`: Response model for meal plan generation.
+        *   `GroceryItem`: Model for individual grocery items with nutritional info.
+        *   `GroceryListResponse`: Response model for grocery list generation.
+        *   `MealPlanInput`: Used to accept meal plan data for grocery list extraction.
+    *   **Utility Functions:**
+        *   `get_gemini_model()`: Initializes and returns the Google Gemini AI model (`gemini-1.5-flash`). Requires `GEMINI_API_KEY` environment variable.
+        *   `safe_json_parse()`: Safely parses JSON from AI responses with retry logic.
+        *   `calculate_calories_needed()`: Estimates daily calorie needs using the Mifflin-St Jeor equation based on height, weight, and activity level.
+    *   **API Endpoints:**
+        *   `GET /`: Health check, returns basic API info.
+        *   `GET /health`: Detailed health check, verifies database and AI model status.
+        *   `POST /mealplan`: Generates a personalized meal plan.
+            *   Takes `HealthData` as input.
+            *   Calculates calorie needs.
+            *   Uses Gemini AI to generate a meal plan based on a detailed prompt.
+            *   Parses and validates the AI's JSON response.
+            *   Returns `MealPlanResponse`.
+        *   `POST /grocery-list`: Extracts and organizes a grocery list from a meal plan.
+            *   Takes `MealPlanInput` (meal plan data) as input.
+            *   Uses Gemini AI to extract and consolidate ingredients, categorize them, and provide nutritional info.
+            *   Generates a unique `session_id`.
+            *   Stores the grocery list in the database using `database.insert_grocery_list`.
+            *   Returns `GroceryListResponse`.
+        *   `GET /grocery-list/{session_id}`: Retrieves a previously generated grocery list by its session ID using `database.get_grocery_list`.
+        *   `DELETE /grocery-list/{session_id}`: Deletes a stored grocery list by its session ID using `database.delete_grocery_list`.
+    *   Includes `uvicorn` for running the FastAPI application.
+
+2.  **Database Interaction (`backend/database.py`):**
+    *   Uses SQLite for temporary data storage.
+    *   `DATABASE_URL` is set to `"temp_grocery_list.db"`.
+    *   **Functions:**
+        *   `create_table()`: Creates the `grocery_lists` table if it doesn't exist, with columns `id`, `session_id`, and `list_data` (stores JSON string).
+        *   `insert_grocery_list(session_id: str, grocery_list: list)`: Inserts a new grocery list, converting the list data to a JSON string.
+        *   `get_grocery_list(session_id: str)`: Retrieves a grocery list by session ID and parses the stored JSON string back into a Python object.
+        *   `delete_grocery_list(session_id: str)`: Deletes a grocery list by session ID.
+    *   The `create_table()` function is called when the module is imported, ensuring the database table is ready.
