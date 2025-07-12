@@ -23,6 +23,10 @@ node_modules/
 # Build output
 build/
 dist/
+frontend/.next/
+
+# Backend specific
+backend/uv.lock
 
 # System files
 .DS_Store
