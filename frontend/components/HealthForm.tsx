@@ -21,7 +21,7 @@ interface HealthFormProps {
 }
 
 const HealthForm: React.FC<HealthFormProps> = ({ onSubmit, isLoading }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<HealthDataFormInputs>({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(healthDataSchema),
     defaultValues: {
       heightFeet: 5,

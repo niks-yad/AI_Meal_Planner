@@ -16,6 +16,7 @@ import logging
 import uuid
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+import threading
 
 # Third-party imports
 import google.generativeai as genai
@@ -30,6 +31,15 @@ import database
 
 # Load environment variables from .env file
 load_dotenv()
+
+# In-memory cache for recipes, thread-safe
+global recipes_cache 
+global recipes_cache_lock 
+global session_id 
+recipes_cache = {}
+recipes_cache_lock = threading.Lock()
+session_id = str(uuid.uuid4())
+
 
 # Configure logging for debugging and monitoring
 logging.basicConfig(
@@ -52,13 +62,14 @@ class HealthData(BaseModel):
     weight: int = Field(..., ge=50, le=500, description="Weight in pounds (50-500)")
     activityLevel: str = Field(..., description="Activity level: sedentary, lightly_active, moderately_active, very_active, extra_active")
     
-    @validator('activityLevel')
-    def validate_activity_level(cls, v):
-        """Ensure activity level is one of the accepted values"""
-        valid_levels = ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active']
-        if v not in valid_levels:
-            raise ValueError(f'Activity level must be one of: {", ".join(valid_levels)}')
-        return v
+    # unnecessary
+    # @validator('activityLevel')
+    # def validate_activity_level(cls, v):
+    #     """Ensure activity level is one of the accepted values"""
+    #     valid_levels = ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active']
+    #     if v not in valid_levels:
+    #         raise ValueError(f'Activity level must be one of: {", ".join(valid_levels)}')
+    #     return v
 
 class DayMeal(BaseModel):
     """Model for a single day's meal plan"""
@@ -268,54 +279,37 @@ async def root():
         "status": "healthy"
     }
 
-@app.get("/health")
-async def health_check():
-    """
-    Detailed health check endpoint.
-    Verifies all system components are functioning.
-    """
-    try:
-        # Test database connection
-        database_status = "healthy"  # Assume healthy for now
+# @app.get("/health")
+# async def health_check():
+#     """
+#     Detailed health check endpoint.
+#     Verifies all system components are functioning.
+#     """
+#     try:
+#         # Test database connection
+#         database_status = "healthy"  # Assume healthy for now
         
-        # Test AI model initialization
-        model = get_gemini_model()
-        ai_status = "healthy" if model else "unhealthy"
+#         # Test AI model initialization
+#         model = get_gemini_model()
+#         ai_status = "healthy" if model else "unhealthy"
         
-        return {
-            "status": "healthy",
-            "timestamp": datetime.now().isoformat(),
-            "components": {
-                "database": database_status,
-                "ai_model": ai_status
-            }
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Service unavailable")
+#         return {
+#             "status": "healthy",
+#             "timestamp": datetime.now().isoformat(),
+#             "components": {
+#                 "database": database_status,
+#                 "ai_model": ai_status
+#             }
+#         }
+#     except Exception as e:
+#         logger.error(f"Health check failed: {e}")
+#         raise HTTPException(status_code=503, detail="Service unavailable")
 
 @app.post("/mealplan", response_model=MealPlanResponse)
 async def generate_meal_plan(
     health_data: HealthData,
     days: int = Query(7, ge=1, le=14, description="Number of days for meal plan")
 ):
-    """
-    Generate a personalized meal plan based on user health data.
-    
-    User Flow:
-    1. User submits health information (height, weight, activity level)
-    2. System calculates calorie needs
-    3. AI generates personalized meal plan
-    4. System validates and returns structured meal plan
-    
-    Args:
-        health_data: User's physical characteristics and activity level
-        days: Number of days to plan meals for (1-14)
-        model: AI model instance (injected dependency)
-        
-    Returns:
-        MealPlanResponse: Structured meal plan with daily meals
-    """
     logger.info(f"Generating meal plan for user: height={health_data.heightFeet}'{health_data.heightInches}\", weight={health_data.weight}lbs, activity={health_data.activityLevel}")
     
     try:
@@ -326,38 +320,58 @@ async def generate_meal_plan(
             health_data.weight,
             health_data.activityLevel
         )
+
+        # Fetch recipes from the /recipes endpoint
+        recipes_response = requests.get("http://localhost:8002/recipes?limit=50", timeout=10)
+        recipes_response.raise_for_status()
         
-        # Create detailed prompt for AI meal plan generation
+        # recipes_data = recipes_response.json().get("recipes", [])
+        recipes_data = [
+            {
+                "name": r.get("name"),
+                "ingredients": r.get("ingredients"),
+                "id": r.get("id")
+            }
+            for r in recipes_response.json().get("recipes", [])
+        ]
+
+        with recipes_cache_lock:
+            recipes_cache[session_id] = recipes_data
+
+        # Create detailed prompt for AI meal plan generation, including recipes
         prompt = f"""
+        You are a meal planning assistant. Here is a list of available recipes:
+        {json.dumps(recipes_data, indent=2)}
+
         Create a personalized {days}-day meal plan for a person with the following profile:
         - Height: {health_data.heightFeet} feet, {health_data.heightInches} inches
         - Weight: {health_data.weight} lbs
         - Activity Level: {health_data.activityLevel.replace('_', ' ')}
         - Estimated Daily Calories: {daily_calories}
-        
+
         Guidelines:
-        1. Use common American foods and standard portion sizes
-        2. Ensure meals are balanced with proper macronutrients
-        3. Reuse ingredients across days to minimize waste and cost
-        4. Consider food expiration dates when planning
-        5. Include variety while being practical
-        
+        1. Use only the provided recipes.
+        2. Ensure meals are balanced with proper macronutrients.
+        3. Reuse ingredients across days to minimize waste and cost.
+        4. Consider food expiration dates when planning.
+        5. Include variety while being practical.
+
         Return ONLY a valid JSON object with this exact structure:
         {{
           "meal_plan": [
             {{
               "day": "Monday",
-              "breakfast": "Detailed breakfast description",
-              "lunch": "Detailed lunch description", 
-              "dinner": "Detailed dinner description",
+              "breakfast": "Recipe name or description from the provided list",
+              "lunch": "Recipe name or description from the provided list", 
+              "dinner": "Recipe name or description from the provided list",
               "snacks": "Healthy snack options"
             }}
           ]
         }}
-        
+
         Do not include any markdown formatting, explanations, or text outside the JSON.
         """
-        
+
         # Generate meal plan using MCP server
         logger.info("Requesting meal plan generation from MCP server")
         ai_response = get_mcp_completion(prompt)
@@ -378,6 +392,7 @@ async def generate_meal_plan(
             status_code=500,
             detail=f"Failed to generate meal plan: {str(e)}"
         )
+# ...existing code...
 
 @app.post("/grocery-list", response_model=GroceryListResponse)
 async def create_grocery_list(
@@ -405,12 +420,25 @@ async def create_grocery_list(
     try:
         # Convert meal plan to JSON string for AI processing
         meal_plan_json = json.dumps(meal_plan_input.meal_plan, indent=2)
+                # Fetch recipes from the /recipes endpoint
+        recipes_response = requests.get("http://localhost:8002/recipes?limit=50", timeout=10)
+        recipes_response.raise_for_status()
         
+        # recipes_data = recipes_response.json().get("recipes", [])
+        recipes_data = [
+            {
+                "name": r.get("name"),
+                "ingredients": r.get("ingredients"),
+                "id": r.get("id")
+            }
+            for r in recipes_response.json().get("recipes", [])
+        ]
+
         # Create detailed prompt for grocery list extraction
         prompt = f"""
         Analyze this meal plan and create a comprehensive grocery list:
         
-        {meal_plan_json}
+        {recipes_data}
         
         Instructions:
         1. Extract all unique ingredients needed for the entire meal plan
