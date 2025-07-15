@@ -56,7 +56,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   generateMealPlan: async (healthData) => {
     set({ loading: true, error: null, mealPlan: null, groceryList: null, sessionId: null });
     try {
-      const response = await axios.post<MealPlanData>(`${API_BASE_URL}/mealplan`, healthData);
+      const requestBody = {
+        ...healthData,
+        days: 7, // Default to 7 days
+      };
+      const response = await axios.post<MealPlanData>(`${API_BASE_URL}/mealplan`, requestBody);
       if (response.status === 200) {
         set({ mealPlan: response.data });
       } else {
@@ -64,7 +68,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } catch (err: any) {
       console.error("Error generating meal plan:", err);
-      set({ error: err.response?.data?.detail || err.message || "An unexpected error occurred" });
+      let errorMessage = "An unexpected error occurred";
+      if (err.response && err.response.data) {
+        errorMessage = `Backend Error: ${JSON.stringify(err.response.data, null, 2)}`;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      set({ error: errorMessage });
     } finally {
       set({ loading: false });
     }

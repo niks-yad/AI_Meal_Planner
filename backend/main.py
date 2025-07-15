@@ -61,6 +61,7 @@ class HealthData(BaseModel):
     heightInches: int = Field(..., ge=0, le=11, description="Height in inches (0-11)")
     weight: int = Field(..., ge=50, le=500, description="Weight in pounds (50-500)")
     activityLevel: str = Field(..., description="Activity level: sedentary, lightly_active, moderately_active, very_active, extra_active")
+    days: int = Field(7, ge=1, le=14, description="Number of days for meal plan")
     
     # unnecessary
     # @validator('activityLevel')
@@ -307,19 +308,19 @@ async def root():
 
 @app.post("/mealplan", response_model=MealPlanResponse)
 async def generate_meal_plan(
-    health_data: HealthData,
-    days: int = Query(7, ge=1, le=14, description="Number of days for meal plan")
+    data: HealthData
 ):
-    logger.info(f"Generating meal plan for user: height={health_data.heightFeet}'{health_data.heightInches}\", weight={health_data.weight}lbs, activity={health_data.activityLevel}")
+    logger.info(f"Generating meal plan for user: height={data.heightFeet}'{data.heightInches}", weight={data.weight}lbs, activity={data.activityLevel})
     
     try:
         # Calculate estimated daily calorie needs
         daily_calories = calculate_calories_needed(
-            health_data.heightFeet,
-            health_data.heightInches,
-            health_data.weight,
-            health_data.activityLevel
+            data.heightFeet,
+            data.heightInches,
+            data.weight,
+            data.activityLevel
         )
+
 
         # Fetch recipes from the /recipes endpoint
         recipes_response = requests.get("http://localhost:8002/recipes?limit=50", timeout=10)
@@ -343,10 +344,10 @@ async def generate_meal_plan(
         You are a meal planning assistant. Here is a list of available recipes:
         {json.dumps(recipes_data, indent=2)}
 
-        Create a personalized {days}-day meal plan for a person with the following profile:
-        - Height: {health_data.heightFeet} feet, {health_data.heightInches} inches
-        - Weight: {health_data.weight} lbs
-        - Activity Level: {health_data.activityLevel.replace('_', ' ')}
+        Create a personalized {data.days}-day meal plan for a person with the following profile:
+        - Height: {data.heightFeet} feet, {data.heightInches} inches
+        - Weight: {data.weight} lbs
+        - Activity Level: {data.activityLevel.replace('_', ' ')}
         - Estimated Daily Calories: {daily_calories}
 
         Guidelines:

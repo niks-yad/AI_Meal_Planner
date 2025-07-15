@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import mockGroceryList from './mockGroceryList';
 
 interface GroceryItem {
   item: string;
@@ -20,7 +19,7 @@ interface GroceryListProps {
 
 const GroceryList: React.FC<GroceryListProps> = ({ list }) => {
   // Use mock data if no list is provided or list is empty
-  const displayList = (list && list.length > 0) ? list : mockGroceryList;
+  const displayList = list ;
 
   // Group items by category
   const groupedList = displayList.reduce((acc, item) => {
