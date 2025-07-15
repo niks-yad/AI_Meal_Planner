@@ -183,13 +183,13 @@ async def mealplan_endpoint(
     days: int = Body(...),
     recipe_limit: int = Body(10)
 ):
-    recipes = get_recipes(recipe_limit)
+    recipes = mcp.invoke_resource("recipes://{limit}", {"limit": recipe_limit})
     result = generate_meal_plan(health_data, days, recipes)
     return JSONResponse(content=result.dict())
 
 @app.get("/recipes/{limit}")
 async def recipes_endpoint(limit: int):
-    recipes = get_recipes(limit)
+    recipes = mcp.invoke_resource("recipes://{limit}", {"limit": limit})
     return JSONResponse(content={"recipes": recipes})
 
 if __name__ == "__main__":
