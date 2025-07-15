@@ -392,7 +392,6 @@ async def generate_meal_plan(
             status_code=500,
             detail=f"Failed to generate meal plan: {str(e)}"
         )
-# ...existing code...
 
 @app.post("/grocery-list", response_model=GroceryListResponse)
 async def create_grocery_list(

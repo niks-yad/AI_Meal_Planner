@@ -17,7 +17,7 @@ import logging
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mcp_server")
+logger = logging.getLogger("recipe_mcp_server")
 
 app = FastAPI(title="MCP-compliant AI Model Server")
 
